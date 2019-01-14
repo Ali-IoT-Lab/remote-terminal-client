@@ -1,5 +1,5 @@
 {
-  "name": "remote-termial-client",
+  "name": "remote-terminal-client",
   "version": "0.0.1",
   "main": "app.js",
   "dependencies": {
@@ -14,5 +14,22 @@
   },
   "devDependencies": {
     "nodemon": "^1.8.1"
-  }
+  },
+  "description": "树莓派客户端连接：",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ali-IoT-Lab/remote-terminal-client.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Ali-IoT-Lab/remote-terminal-client/issues"
+  },
+  "homepage": "https://github.com/Ali-IoT-Lab/remote-terminal-client#readme"
 }
