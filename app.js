@@ -41,9 +41,11 @@ var Eth0MacAddress = "",
 
 try {
   var oldVersion = fs.readFileSync(paths.MOJA_VERSION_PATH).toString().replace(/(\r|\n)/gi, "");
-  if(oldVersion != version) {
-    child_process.execSync(`sh ${path.resolve(path.join(__dirname, "./operation/killApp.sh"))} ${version}`);
-  }
+  console.log("1111qqqqsertyuioigfdsdfghjkl")
+  console.log(oldVersion)
+    if(oldVersion != version) {
+      child_process.execSync(`sh ${path.resolve(path.join(__dirname, "./operation/killApp.sh"))} ${version}`);
+    }
   UsedDf = child_process.execSync('echo `df -k  |grep -w "/"|awk -F \' \'  \'{print $3}\'`').toString().trim();
   AvailDf = child_process.execSync('echo `df -k  |grep -w "/"|awk -F \' \'  \'{print $4}\'`').toString().trim();
   TotalDf = parseInt(UsedDf) + parseInt(AvailDf);

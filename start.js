@@ -1,30 +1,38 @@
 const os = require("os");
+const fs = require("fs");
 const child_process = require("child_process");
-var logPath="/var/tmp/client-logs";
+var pm2Json=`
+{
+  "apps": [
+    {
+      "name": "client-v${process.argv[2]}",
+      "script": "${os.homedir()}/.moja/client/v${process.argv[2]}/node_modules/remote-terminal-client/app.js",
+      "error_file": "/var/tmp/client-logs/err.log",
+      "out_file": "/var/tmp/client-logs/out.log",
+      "merge_logs": true
+    }
+  ]
+}
+`;
 
-//定时pm2命令路径
-var pm2Pth=`${os.homedir()}/.moja/pmtwo/node_modules/pm2/bin/pm2`;
-//定义客户端启动文件路径
-var appPath=`${os.homedir()}/.moja/client/node_modules/remote-terminal-client/app.js`;
-//定义pm2启动参数
-var startParam = `--log-type json --merge-logs --log-date-format="YYYY-MM-DD HH:mm:ss Z" -o ${logPath}/out.log -e ${logPath}/err.log --name client-v${lastVersion}`;
+var pm2JsonPath = `${os.homedir()}/.moja/client/v${process.argv[2]}/node_modules/remote-terminal-client/pm2.json`;
 
-var cmd = `${pm2Pth} start ${appPath} ${startParam}`;
+fs.writeFileSync(pm2JsonPath, pm2Json, {flag: 'w+' });
+var cmd = `${os.homedir()}/.moja/pmtwo/node_modules/pm2/bin/pm2 start ${pm2JsonPath}`;
 
 var uout = "",
     uerr = "";
-
 var startApp = child_process.exec(cmd, { maxBuffer : 10*1000 * 1024 });
 
-  startApp.stdout.on("data", (trunk) => {
-    uout += trunk;
-  });
-  startApp.stderr.on("data", (trunk) => {
-    uerr += trunk;
-  });
-  startApp.on("error", (error) => {
-    console.error(`[(${new Date()})  start remote-terminal-client] exec start command with error: ${error}`);
-  });
-  startApp.on("exit", (code, signal) => {
-    console.log(`[ + (${new Date()}) start remote-terminal-client] exit start application with code: ${code} ,stdout: ${uout} ,stderr: ${uerr}`);
-  });
+startApp.stdout.on("data", (trunk) => {
+  uout += trunk;
+});
+startApp.stderr.on("data", (trunk) => {
+  uerr += trunk;
+});
+startApp.on("error", (error) => {
+  console.error(`[(${new Date()})  start remote-terminal-client] exec start command with error: ${error}`);
+});
+startApp.on("exit", (code, signal) => {
+  console.log(`[ + (${new Date()}) start remote-terminal-client] exit start application with code: ${code} ,stdout: ${uout} ,stderr: ${uerr}`);
+});

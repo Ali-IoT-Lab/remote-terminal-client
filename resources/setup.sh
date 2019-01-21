@@ -148,18 +148,17 @@ install_app(){
   $envrun $npmPath config set loglevel=http $npmopt
   #安装管理模块
   $envrun $npmPath install -g moja-terminal --unsafe-perm=true --prefix /$HOME_DIR/moja/nodejs $npmopt
-  #安装pm2
-  $envrun $npmPath install -g pm2 --unsafe-perm=true --prefix /$HOME_DIR/moja/nodejs $npmopt
   #设置key
   $envrun moja set-key $userKey
 }
 #添加定时任务列表 开机自启动任务
+
 add_crontab_list(){
   crontab -u root -l | grep -v '.moja' |crontab -
-  (echo "*/1 * * * * sh /$HOME_DIR/moja/.moja/client/deamon/deamon.sh" ;crontab -l) | crontab
+  (echo "*/1 * * * * sh /$HOME_DIR/moja/.moja/deamon/deamon.sh" ;crontab -l) | crontab
   (echo "*/1 * * * * if [ -f \"/$HOME_DIR/moja/uninstall\" ]; then crontab -u root -l | grep -v \".moja\" |crontab -;rm -r -f /$HOME_DIR/moja/uninstall;fi;" ;crontab -l) | crontab
-  (echo "1 0 * * */1 sh /$HOME_DIR/moja/.moja/client/handleLog/tarLog.sh" ;crontab -l) | crontab
-  (echo "@reboot sh /$HOME_DIR/moja/.moja/client/deamon/deamon.sh" ;crontab -l) | crontab
+  (echo "1 0 * * */1 sh /$HOME_DIR/moja/.moja/handleLog/tarLog.sh" ;crontab -l) | crontab
+  (echo "@reboot sh /$HOME_DIR/moja/.moja/deamon/deamon.sh" ;crontab -l) | crontab
 }
 
 uninstall_old
