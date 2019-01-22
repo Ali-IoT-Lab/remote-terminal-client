@@ -1,6 +1,6 @@
 {
   "name": "remote-terminal-client",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "main": "app.js",
   "dependencies": {
     "node-pty-prebuilt": "^0.7.6",
