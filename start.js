@@ -9,7 +9,6 @@ var pm2Json=`
       "script": "${os.homedir()}/.moja/client/v${process.argv[2]}/node_modules/remote-terminal-client/app.js",
       "error_file": "/var/tmp/client-logs/err.log",
       "out_file": "/var/tmp/client-logs/out.log",
-      "merge_logs": true
     }
   ]
 }
