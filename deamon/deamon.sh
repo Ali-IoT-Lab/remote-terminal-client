@@ -35,6 +35,6 @@ if [ -f "/$HOME_DIR/moja/install-mode" ] ; then
 else
   if [ -z "$tmp" ]; then
     node $startPath $currVersion
-    rm -r -f `ls $USER_DIR/client | grep -v "v$currVersion"`
+    rm -r -f `ls $USER_DIR/client | grep -v "v$currVersion"`git
   fi
 fi
