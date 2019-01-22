@@ -40,13 +40,6 @@ var Eth0MacAddress = "",
     UpdateStatus ={};
 
 try {
-
-  //判断根据版本号判断当前启动是否为升级启动 若为升级起动则删除旧版本进程
-  var oldVersion = fs.readFileSync(paths.MOJA_VERSION_PATH).toString().replace(/(\r|\n)/gi, "");
-    if(oldVersion != version) {
-      child_process.execSync(`sh ${path.resolve(path.join(__dirname, "./operation/killApp.sh"))} ${version}`);
-    }
-
   //获取磁盘信息
   UsedDf = child_process.execSync('echo `df -k  |grep -w "/"|awk -F \' \'  \'{print $3}\'`').toString().trim();
   AvailDf = child_process.execSync('echo `df -k  |grep -w "/"|awk -F \' \'  \'{print $4}\'`').toString().trim();
