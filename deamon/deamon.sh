@@ -30,11 +30,11 @@ tmp=`ps -ef | grep $appPath | grep -v grep`
 if [ -f "/$HOME_DIR/moja/install-mode" ] ; then
   if [ -z "$tmp" ]; then
     sudo su - moja -c "/$HOME_DIR/moja/nodejs/bin/node $startPath $currVersion"
-    rm -r -f `ls | grep -v "v$currVersion"`
+    rm -r -f `ls $USER_DIR/client | grep -v "v$currVersion"`
   fi
 else
   if [ -z "$tmp" ]; then
     node $startPath $currVersion
-    rm -r -f `ls | grep -v "v$currVersion"`
+    rm -r -f `ls $USER_DIR/client | grep -v "v$currVersion"`
   fi
 fi

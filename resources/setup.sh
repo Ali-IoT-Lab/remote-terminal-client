@@ -90,6 +90,8 @@ create_work_user(){
 clean_dir(){
   rm -r -f /$HOME_DIR/moja/nodejs
   rm -r -f /var/tmp//var/tmp/client-logs-tar
+  rm -r -f /$HOME_DIR/moja/npm-cache
+  rm -r -f /$HOME_DIR/moja/nodejs
 }
 
 #环境变量初始化
