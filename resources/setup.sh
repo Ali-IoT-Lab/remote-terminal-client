@@ -22,8 +22,8 @@ fi
 #卸载旧版本
 uninstall_old(){
   if [ $osType = "darwin" ] ;then
+    HOME_DIR='Users'
     if [ -d "/Users/moja/.config/nodejs" ]; then
-      HOME_DIR='Users'
       mv /Users/moja/.config/terminalId.js /Users/terminalId.js
       mv /Users/moja/.config/userId.js /Users/userId.js
       kill -9 $(ps -ef|grep "/Users/moja/.pm2"|awk '$0 !~/grep/ {print $2}'|tr -s '\n' ' ') >/dev/null 2>&1
@@ -33,8 +33,8 @@ uninstall_old(){
       rm -r -f /Users/moja
     fi
   elif [ $osType = "linux" ] ;then
+    HOME_DIR='home'
    if [ -d "/home/moja/.config/nodejs" ]; then
-      HOME_DIR='home'
       mv /home/moja/.config/terminalId.js /home/terminalId.js
       mv /home/moja/.config/userId.js /home/userId.js
       ps -ef|grep -w '/home/moja/.pm2'|grep -v grep|cut -c 9-15|xargs kill -9 >/dev/null 2>&1
@@ -53,6 +53,10 @@ uninstall_old(){
 
 #创建用户工作空间
 create_work_user(){
+
+  rm -r -f /$HOME_DIR/terminalId.js
+  rm -r -f /$HOME_DIR/userId.js
+
   if ! id moja
   then
     if [ $osType = "darwin" ] ;then
@@ -111,8 +115,6 @@ clean_dir(){
   rm -r -f /$HOME_DIR/moja/npm-cache
   rm -r -f /$HOME_DIR/moja/nodejs
   rm -r -f /$HOME_DIR/moja/uninstall
-  rm -r -f /$HOME_DIR/terminalId.js
-  rm -r -f /$HOME_DIR/userId.js
 }
 
 #环境变量初始化
