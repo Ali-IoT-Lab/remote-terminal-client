@@ -50,6 +50,7 @@ uninstall_old(){
   rm -r -f /var/tmp/client-logs
   rm -r -f /var/tmp/client-logs-tar
 }
+
 #创建用户工作空间
 create_work_user(){
   if ! id moja
@@ -76,12 +77,29 @@ create_work_user(){
   else
     if [ $osType = "darwin" ] ;then
       HOME_DIR='Users'
-      sed -i '' '/export PS1/d' /$HOME_DIR/moja/.bashrc
-      sed -i '' '/Users\/moja/d' /$HOME_DIR/moja/.bashrc
+      mv  /Users/moja/.moja/terminalId.js /Users/terminalId.js
+      mv  /Users/moja/.moja/userId.js /Users/userId.js
+      dscl . delete /Groups/moja
+      dscl . delete /Users/moja
+      rm -r -f /Users/moja
+      dscl . -create /Users/moja
+      dscl . -create /Users/moja UserShell /bin/bash
+      dscl . -create /Users/moja RealName "USER NAME"
+      dscl . -create /Users/moja UniqueID 1001
+      dscl . -create /Users/moja PrimaryGroupID 20
+      dscl . -create /Users/moja NFSHomeDirectory /Users/moja
+      dscl . -passwd /Users/moja 123456
+      dseditgroup -o create moja
+      dscl . -append /Groups/moja GroupMembership moja
+      createhomedir -c -u moja
     fi
     if [ $osType = "linux" ] ;then
-      sed -i '/export PS1/d' /$HOME_DIR/moja/.bashrc
-      sed -i '/home\/moja/d' /$HOME_DIR/moja/.bashrc
+      mv  /home/moja/.moja/terminalId.js /home/terminalId.js
+      mv  /home/moja/.moja/userId.js /home/userId.js
+      userdel -f moja
+      rm -r -f /home/moja
+      useradd -s /bin/bash -d /$HOME_DIR/moja  -U moja -m
+      passwd -d moja
     fi
   fi
 }
@@ -92,6 +110,9 @@ clean_dir(){
   rm -r -f /var/tmp//var/tmp/client-logs-tar
   rm -r -f /$HOME_DIR/moja/npm-cache
   rm -r -f /$HOME_DIR/moja/nodejs
+  rm -r -f /$HOME_DIR/moja/uninstall
+  rm -r -f /$HOME_DIR/terminalId.js
+  rm -r -f /$HOME_DIR/userId.js
 }
 
 #环境变量初始化
@@ -149,7 +170,7 @@ install_app(){
   $envrun $npmPath config set registry=https://registry.cnpmjs.org $npmopt
   $envrun $npmPath config set loglevel=http $npmopt
   #安装管理模块
-  $envrun $npmPath install -g moja-terminal --unsafe-perm=true --prefix /$HOME_DIR/moja/nodejs $npmopt
+  $envrun $npmPath install -g moja-terminal@latest --unsafe-perm=true --prefix /$HOME_DIR/moja/nodejs $npmopt
   #设置key
   $envrun moja set-key $userKey
 }
