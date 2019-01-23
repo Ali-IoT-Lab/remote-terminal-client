@@ -24,12 +24,14 @@ fi
 
 currVersion=`cat $USER_DIR/moja-version|tr -d '\n'`
 appPath="$USER_DIR/client/v$currVersion/node_modules"
+echo $currVersion
 startPath="$USER_DIR/client/v$currVersion/node_modules/remote-terminal-client/start.js"
+
 tmp=`ps -ef | grep $appPath | grep -v grep`
 
 if [ -f "/$HOME_DIR/moja/install-mode" ] ; then
   if [ -z "$tmp" ]; then
-    sudo su - moja -c "/$HOME_DIR/moja/nodejs/bin/node $startPath $currVersion"
+    sudo su - moja -c "env PATH=$PATH:/$HOME_DIR/moja/nodejs/bin node $startPath $currVersion"
     cd $USER_DIR/client;rm -r -f `ls | grep -v "v$currVersion"`
   fi
 else
