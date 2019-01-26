@@ -4,7 +4,7 @@
 
 clientVersion=$1
 
-mkdir -p ~/.moja/client/v$$1
+mkdir -p ~/.moja/client/v$1
 echo "3"> ~/.moja/stage
 npm install remote-terminal-client@latest --unsafe-perm=true --registry=https://registry.cnpmjs.org --prefix ~/.moja/client/v$clientVersion
 echo "4"> ~/.moja/stage
