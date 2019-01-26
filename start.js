@@ -2,7 +2,6 @@ const os = require("os");
 const fs = require("fs");
 const path = require("path");
 const child_process = require("child_process");
-const paths = require('./lib/paths.js');
 
 var newVersion = process.argv[2];
 var HOME="";
@@ -30,12 +29,6 @@ var pm2Json=`
   ]
 }
 `;
-
-//判断根据版本号判断当前启动是否为升级启动 若为升级起动则删除旧版本进程
-var oldVersion = fs.readFileSync(paths.MOJA_VERSION_PATH).toString().replace(/(\r|\n)/gi, "");
-if(oldVersion != newVersion) {
-  child_process.execSync(`sh ${path.resolve(path.join(__dirname, "./operation/killApp.sh"))} ${newVersion}`);
-}
 
 var pm2JsonPath = `${os.homedir()}/.moja/client/v${newVersion}/node_modules/remote-terminal-client/pm2.json`;
 
