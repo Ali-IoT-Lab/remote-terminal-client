@@ -1,6 +1,6 @@
 const os = require("os");
 const fs = require("fs");
-const p = require("path");
+const path = require("path");
 const child_process = require("child_process");
 const paths = require('./lib/paths.js');
 
@@ -14,7 +14,7 @@ if(os.platform() == 'darwin'){
   HOME='Users'
 }
 
-if(fs.existsSync(p.join('/', HOME, 'moja', 'install-mode'))) { //curl安装方式判断
+if(fs.existsSync(path.join('/', HOME, 'moja', 'install-mode'))) { //curl安装方式判断
   process.env.PATH=`${process.env.PATH}:/${HOME}/moja/nodejs/bin`;
 }
 
