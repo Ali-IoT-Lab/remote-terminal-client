@@ -17,8 +17,6 @@ const terminalId = require(paths.TERMINAL_ID_PATH);
 const userId = require(paths.USER_ID_PATH);
 const publicKey = require(paths.PUBLIC_KEY_PATH).publicKey;
 const email = require(paths.EMAIL_PATH).email;
-
-/* 非信任证书免认证 */
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
 var Eth0MacAddress = "",
@@ -84,6 +82,7 @@ var ip = JSON.stringify({
   eth0IPAddress: Eth0IPAddress,
   wlan0IPAddress: Wlan0IPAddress,
 });
+
 TerminalId = terminalId;
 UserId = userId;
 
@@ -104,6 +103,7 @@ if (publicKey.length !== 0) {
   controlRequestUrl += `&key=public&version=${version}`;
   commandRequestUrl += `&key=public`;
 }
+
 const socket = io(controlRequestUrl,{
   secure:true,
   reconnection:true,
