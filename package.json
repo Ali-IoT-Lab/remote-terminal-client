@@ -3,7 +3,7 @@
   "version": "0.0.29",
   "main": "app.js",
   "dependencies": {
-    "node-pty-prebuilt": "^0.7.6",
+    "node-pty": "^0.7.6",
     "socket.io-client": "^2.1.1",
     "physical-cpu-count": "^2.0.0",
     "request": "^2.88.0",
