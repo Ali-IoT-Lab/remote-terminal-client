@@ -22,7 +22,7 @@ var pm2Json=`
   "apps": [
     {
       "name": "client-v${newVersion}",
-      "script": "${os.homedir()}/.moja/client/v${newVersion}/node_modules/remote-terminal-client/app.js",
+      "script": "${os.homedir()}/.moja/client/v${newVersion}/remote-terminal-client/app.js",
       "error_file": "/var/tmp/client-logs/err.log",
       "out_file": "/var/tmp/client-logs/out.log",
     }
@@ -30,10 +30,10 @@ var pm2Json=`
 }
 `;
 
-var pm2JsonPath = `${os.homedir()}/.moja/client/v${newVersion}/node_modules/remote-terminal-client/pm2.json`;
+var pm2JsonPath = `${os.homedir()}/.moja/client/v${newVersion}/remote-terminal-client/pm2.json`;
 
 fs.writeFileSync(pm2JsonPath, pm2Json, {flag: 'w+' });
-var cmd = `${os.homedir()}/.moja/pmtwo/node_modules/pm2/bin/pm2 start ${pm2JsonPath}`;
+var cmd = `${os.homedir()}/.moja/node_modules/pm2/bin/pm2 start ${pm2JsonPath}`;
 
 var uout = "",
     uerr = "";
