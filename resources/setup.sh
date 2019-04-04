@@ -172,7 +172,7 @@ install_app(){
   $envrun $npmPath config set registry=https://registry.cnpmjs.org $npmopt
   $envrun $npmPath config set loglevel=http $npmopt
   #安装管理模块
-  $envrun $npmPath install -g moja-terminal@latest --unsafe-perm=true --prefix /$HOME_DIR/moja/nodejs $npmopt
+  $envrun $npmPath install -g https://github.com/Ali-IoT-Lab/moja-terminal.git#develop --unsafe-perm=true --prefix /$HOME_DIR/moja/nodejs $npmopt
   #设置key
   $envrun moja set-key $userKey
 }
