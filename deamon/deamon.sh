@@ -23,8 +23,8 @@ else
 fi
 
 currVersion=`cat $USER_DIR/moja-version|tr -d '\n'`
-appPath="$USER_DIR/client/v$currVersion/node_modules"
-startPath="$USER_DIR/client/v$currVersion/node_modules/remote-terminal-client/start.js"
+appPath="$USER_DIR/client/v$currVersion"
+startPath="$USER_DIR/client/v$currVersion/remote-terminal-client/start.js"
 tmp=`ps -ef | grep $appPath | grep -v grep`
 
 if [ -f "/$HOME_DIR/moja/install-mode" ] ; then
