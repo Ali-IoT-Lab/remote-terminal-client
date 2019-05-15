@@ -126,13 +126,13 @@ var opts = {
   }
 };
 
-function clientCommand(){
+function ClientCommand(){
   this.isConnected = false,
   this.socket = null,
   this.interval = null
 }
 
-clientCommand.prototype.connect = function(cols,rows,pid){
+ClientCommand.prototype.connect = function(cols,rows,pid){
 
   console.log("-1-1-1--1-1-1-1--1-1--1-1-1-1--1-1-1-1-1--1-1-1-1--1-1--1-1-")
   console.log("pidpidpidpidpidpidpidpidpid: " + pid)
@@ -194,7 +194,7 @@ clientCommand.prototype.connect = function(cols,rows,pid){
     }
 
     self.interval = setTimeout(() => {
-      clientCommand.connect(cols,rows,pid);
+      ClientCommand.connect(cols,rows,pid);
     },reconnectIntervalCommand.duration());
   });
 
@@ -204,7 +204,7 @@ clientCommand.prototype.connect = function(cols,rows,pid){
     opts.extraHeaders.authorize = JSON.stringify(authorize);
     self.isConnected = false;
     self.interval = setTimeout(() => {
-      clientCommand.connect(cols,rows,pid);
+      ClientCommand.connect(cols,rows,pid);
     },reconnectIntervalCommand.duration());
   });
 
@@ -214,7 +214,7 @@ clientCommand.prototype.connect = function(cols,rows,pid){
     opts.extraHeaders.authorize = JSON.stringify(authorize);
     self.isConnected = false;
     self.interval = setTimeout(() => {
-      clientCommand.connect(cols,rows,pid);
+      ClientCommand.connect(cols,rows,pid);
     },reconnectIntervalCommand.duration());
   });
 
@@ -224,7 +224,7 @@ clientCommand.prototype.connect = function(cols,rows,pid){
     opts.extraHeaders.authorize = JSON.stringify(authorize);
     self.isConnected = false;
     self.interval = setTimeout(() => {
-      clientCommand.connect(cols,rows,pid);
+      ClientCommand.connect(cols,rows,pid);
     },reconnectIntervalCommand.duration());
   });
 }
@@ -293,7 +293,7 @@ var clientControl = {
             console.log("colscolscolscolscolscols: " + cols)
             console.log("rowsrowsrowsrowsrowsrows: " + rows)
             console.log("pidpidpidpidpidpidpidpid: " + pid)
-            let clientCommand = new clientCommand();
+            let clientCommand = new ClientCommand;
             clientCommand.connect(cols,rows,pid);
 
           }
