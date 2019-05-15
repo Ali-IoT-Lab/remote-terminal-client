@@ -4,6 +4,7 @@ const path = require("path");
 const crypto = require('crypto');
 const child_process = require("child_process");
 var ss = require('socket.io-stream');
+const extend = require("extend");
 const Base64 = require('js-base64').Base64;
 const paths = require('./lib/paths.js');
 const msmonit = require('./lib/monitor');
@@ -126,113 +127,11 @@ var opts = {
   }
 };
 
-function ClientCommand(){
-  this.isConnected = false,
-  this.socket = null,
-  this.interval = null
-}
-
-ClientCommand.prototype.connect = function(cols,rows,pid){
-
-  console.log("-1-1-1--1-1-1-1--1-1--1-1-1-1--1-1-1-1-1--1-1-1-1--1-1--1-1-")
-  console.log("pidpidpidpidpidpidpidpidpid: " + pid)
-
-  if (this.socket) {
-    this.socket.destroy();
-    delete this.socket;
-    this.socket = null;
-  }
-  var self = this;
-  this.socket = io.connect(`${commandRequestUrl}&pid=${pid}&version=${version}&terminalId=${TerminalId}`, opts);
-
-  this.socket.on('connect', () => {
-    self.isConnected = true;
-    reconnectIntervalCommand = new Backoff({
-      ms: 800,
-      max: 10000,
-      jitter:0.1
-    });
-
-    authorize['reconnect']=false;
-    console.log('[' + (new Date()) + ' Command] Client Connected With URL ' + commandRequestUrl+", pid from server: " + pid);
-    self.socket.once(`${TerminalId}:${UserId}:${pid}`,function(){
-      if (!Terminal[pid]) {
-        Terminal[pid] = pty.spawn(process.platform === 'win32' ? 'cmd.exe' : 'bash', [], {
-          name: 'xterm-color',
-          cols: cols || 80,
-          rows: rows || 24,
-          cwd: os.homedir(),
-          env: process.env
-        });
-        Terminal[pid].on('data', (data) => {
-          Logs[pid] += data;
-          self.socket.send(data);
-        });
-      }
-      console.log('[' + (new Date()) + ' Command] Created terminal with PID: ' + Terminal[pid].pid+", pid from server: " + pid);
-    })
-  });
-  this.socket.on('message', (msg) => {
-    console.log('[' + (new Date()) + ' Command] Client receive message ' +msg+", pid from server: " + pid);
-    try {
-      Terminal[pid].write(msg);
-    } catch (error) {
-      console.error('[' + (new Date()) + ' Command] Terminal write msg with error: ' + error+", pid from server: " + pid);
-    }
-  });
-  this.socket.on('disconnect', () => {
-    console.error('[' + (new Date()) + ' Command] Connect connect_error  ' + commandRequestUrl + " With " + JSON.stringify(arguments[0])+", pid from server: " + pid);
-    authorize['reconnect'] = true;
-    opts.extraHeaders.authorize = JSON.stringify(authorize);
-    self.isConnected = false;
-
-    if (CloseCommMsg[pid] && CloseCommMsg[pid].Type == ctx.OPERATION_TYPE.CLOSECONNECT){
-      Terminal[pid].kill();
-      delete CloseCommMsg[pid];
-      delete Terminal[pid];
-      delete Logs[pid];
-    }
-
-    self.interval = setTimeout(() => {
-      ClientCommand.connect(cols,rows,pid);
-    },reconnectIntervalCommand.duration());
-  });
-
-  this.socket.on('error', (error) => {
-    console.error('[' + (new Date()) + ' Command] Connect error  ');
-    authorize['reconnect'] = true;
-    opts.extraHeaders.authorize = JSON.stringify(authorize);
-    self.isConnected = false;
-    self.interval = setTimeout(() => {
-      ClientCommand.connect(cols,rows,pid);
-    },reconnectIntervalCommand.duration());
-  });
-
-  this.socket.on('connect_error', (data) => {
-    console.error('[' + (new Date()) + ' Command] Connect connect_error  ' + controlRequestUrl + " With " + JSON.stringify(arguments[0]));
-    authorize['reconnect'] = true;
-    opts.extraHeaders.authorize = JSON.stringify(authorize);
-    self.isConnected = false;
-    self.interval = setTimeout(() => {
-      ClientCommand.connect(cols,rows,pid);
-    },reconnectIntervalCommand.duration());
-  });
-
-  this.socket.on('connect_timeout', (data) => {
-    console.error('[' + (new Date()) + ' Command] Connect connect_timeout  ');
-    authorize['reconnect'] = true;
-    opts.extraHeaders.authorize = JSON.stringify(authorize);
-    self.isConnected = false;
-    self.interval = setTimeout(() => {
-      ClientCommand.connect(cols,rows,pid);
-    },reconnectIntervalCommand.duration());
-  });
-}
-
 var clientControl = {
   isConnected: false,
   socket: null,
   interval: null,
+  isFirst:null,
   connect() {
 
     if (this.socket) {
@@ -240,12 +139,12 @@ var clientControl = {
       delete this.socket;
       this.socket = null;
     }
-
     var self = this;
     this.socket = io.connect(controlRequestUrl, opts);
 
     this.socket.on('connect', () => {
       self.isConnected = true;
+      this.isFirst = null;
       reconnectIntervalControl = new Backoff({
         ms: 800,
         max: 10000,
@@ -256,13 +155,7 @@ var clientControl = {
     this.socket.once('message', (MSG) => {
       console.log('[' + (new Date()) + ' Control] Client receive message ' + JSON.stringify(MSG));
       try {
-
         var message = JSON.parse(MSG);
-        console.log("ctx.OPERATION_TYPE.TERMINAL")
-        console.log(ctx.OPERATION_TYPE.TERMINAL)
-        console.log("ctx.MESSAGE_TYPE.COMMON_TYPE")
-        console.log(ctx.MESSAGE_TYPE.COMMON_TYPE)
-
       } catch (error) {
         console.error('[' + (new Date()) + ' Control] Client receive message with error: ' + error);
         return;
@@ -284,18 +177,10 @@ var clientControl = {
       }else if (message.Type == ctx.OPERATION_TYPE.TERMINAL) {
         var terminObj = message.data;
         if (message.opType == ctx.MESSAGE_TYPE.COMMON_TYPE) {
-          console.log("---0000---0-0-0-0-0-0-0-0-0-0-0-0-0-0-");
           var cols = terminObj.cols, rows = terminObj.rows, pid = terminObj.pid;
           self.socket.send(JSON.stringify({type: ctx.OPERATION_TYPE.TERMINAL, opType: ctx.MESSAGE_TYPE.COMMON_TYPE, userId: UserId}));
           if (!Terminal[pid]) {
-
-            console.log("9998989898989898989898989898989898989898989898989898989898989898989898989898")
-            console.log("colscolscolscolscolscols: " + cols)
-            console.log("rowsrowsrowsrowsrowsrows: " + rows)
-            console.log("pidpidpidpidpidpidpidpid: " + pid)
-            let clientCommand = new ClientCommand;
-            clientCommand.connect(cols,rows,pid);
-
+            extend(true,{},clientCommand).connect(cols,rows,pid);
           }
         }
       }else if (message.Type == ctx.OPERATION_TYPE.TERMINALID) {
@@ -383,40 +268,179 @@ var clientControl = {
       console.error('[' + (new Date()) +  ' Control] Connect disconnect  ' + controlRequestUrl + " With " + JSON.stringify(arguments[0]));
       authorize['terminalId'] = TerminalId;
       opts.extraHeaders.authorize = JSON.stringify(authorize);
-      self.isConnected = false;
-      self.interval = setTimeout(() => {
-        clientControl.connect()
-      },reconnectIntervalControl.duration());
+      this.isConnected = false;
+      this.isFirst = "non";
+      var connectTimeInterval = 0;
+      var uptadeTimeInterval = function(){
+        if (self.isConnected) {
+          console.error('[' + (new Date()) + ' Control]reconnected successfully ..............');
+          clearInterval(self.interval);
+          self.interval = null;
+          return;
+        }else {
+          clearInterval(self.interval);
+          connectTimeInterval = reconnectIntervalControl.duration();
+          console.error('[' + (new Date()) + ' Control] try to connect ..............');
+          console.error(connectTimeInterval);
+          clientControl.connect()
+          self.interval = setInterval(uptadeTimeInterval, connectTimeInterval);
+        }
+      }
+      self.interval = setInterval(uptadeTimeInterval, connectTimeInterval);
     });
 
     this.socket.on('error', (error) => {
       console.error('[' + (new Date()) + ' Control] Connect error  ' + controlRequestUrl + " With " + JSON.stringify(arguments[0]));
       authorize['terminalId'] = TerminalId;
       opts.extraHeaders.authorize = JSON.stringify(authorize);
-      self.isConnected = false;
-      self.interval = setTimeout(() => {
-        clientControl.connect()
-      },reconnectIntervalControl.duration());
+      this.isConnected = false;
+      !this.isFirst && (this.interval = setTimeout(() => {
+        console.error('[' + (new Date()) + ' Control] 3212321423567890-986754322  ');
+        clientControl.connect();
+      },reconnectIntervalControl.duration()));
     });
 
     this.socket.on('connect_error', (data) => {
       console.error('[' + (new Date()) + ' Control] Connect connect_error  ' + controlRequestUrl + " With " + JSON.stringify(arguments[0]));
       authorize['terminalId'] = TerminalId;
       opts.extraHeaders.authorize = JSON.stringify(authorize);
-      self.isConnected = false;
-      self.interval = setTimeout(() => {
-        clientControl.connect()
-      },reconnectIntervalControl.duration());
+      this.isConnected = false;
+      !this.isFirst && (this.interval = setTimeout(() => {
+        console.error('[' + (new Date()) + ' Control] 3212321423567890-986754322  ');
+        clientControl.connect();
+      },reconnectIntervalControl.duration()));
     });
 
     this.socket.on('connect_timeout', () => {
       console.error('[' + (new Date()) + ' Control] Connect connect_timeout  ' + controlRequestUrl + " With " + JSON.stringify(arguments[0]));
       authorize['terminalId'] = TerminalId;
       opts.extraHeaders.authorize = JSON.stringify(authorize);
+      this.isConnected = false;
+      !this.isFirst && (this.interval = setTimeout(() => {
+        console.error('[' + (new Date()) + ' Control] 3212321423567890-986754322  ');
+        clientControl.connect();
+      },reconnectIntervalControl.duration()));
+    });
+  }
+}
+
+var clientCommand = {
+  isConnected: false,
+  socket: null,
+  interval: null,
+  isFirst:null,
+  connect(cols,rows,pid) {
+    if (this.socket) {
+      this.socket.destroy();
+      delete this.socket;
+      this.socket = null;
+    }
+    var self = this;
+    this.socket = io.connect(`${commandRequestUrl}&pid=${pid}&version=${version}&terminalId=${TerminalId}`, {
+      secure:true,
+      reconnection:false,
+      transports:['websocket', 'polling'],
+    });
+
+    this.socket.on('connect', () => {
+      self.isConnected = true;
+      reconnectIntervalCommand = new Backoff({
+        ms: 800,
+        max: 10000,
+        jitter:0.1
+      });
+
+      authorize['reconnect']=false;
+      console.log('[' + (new Date()) + ' Command] Client Connected With URL ' + commandRequestUrl+", pid from server: " + pid);
+      self.socket.once(`${TerminalId}:${UserId}:${pid}`,function(){
+        if (!Terminal[pid]) {
+          Terminal[pid] = pty.spawn(process.platform === 'win32' ? 'cmd.exe' : 'bash', [], {
+            name: 'xterm-color',
+            cols: cols || 80,
+            rows: rows || 24,
+            cwd: os.homedir(),
+            env: process.env
+          });
+          Terminal[pid].on('data', (data) => {
+            Logs[pid] += data;
+            self.socket.send(data);
+          });
+        }
+        console.log('[' + (new Date()) + ' Command] Created terminal with PID: ' + Terminal[pid].pid+", pid from server: " + pid);
+      })
+
+    });
+    this.socket.on('message', (msg) => {
+      console.log('[' + (new Date()) + ' Command] Client receive message ' +msg+", pid from server: " + pid);
+      try {
+        Terminal[pid].write(msg);
+      } catch (error) {
+        console.error('[' + (new Date()) + ' Command] Terminal write msg with error: ' + error+", pid from server: " + pid);
+      }
+    });
+    this.socket.on('disconnect', () => {
+      console.error('[' + (new Date()) + ' Command] Connect connect_error  ' + commandRequestUrl + " With " + JSON.stringify(arguments[0])+", pid from server: " + pid);
+      authorize['reconnect'] = true;
+      opts.extraHeaders.authorize = JSON.stringify(authorize);
       self.isConnected = false;
-      self.interval = setTimeout(() => {
-        clientControl.connect()
-      },reconnectIntervalControl.duration());
+      this.isFirst = "non";
+      if (CloseCommMsg[pid] && CloseCommMsg[pid].Type == ctx.OPERATION_TYPE.CLOSECONNECT){
+        Terminal[pid].kill();
+        delete CloseCommMsg[pid];
+        delete Terminal[pid];
+        delete Logs[pid];
+      }
+
+      var connectTimeInterval = 0;
+      var uptadeTimeInterval = function(){
+        if (self.isConnected) {
+          console.error('[' + (new Date()) + ' Control]reconnected successfully ..............');
+          clearInterval(self.interval);
+          self.interval = null;
+          return;
+        }else {
+          clearInterval(self.interval);
+          connectTimeInterval = reconnectIntervalCommand.duration();
+          console.error('[' + (new Date()) + ' Control] try to connect ..............');
+          console.error(connectTimeInterval);
+          clientCommand.connect(cols,rows,pid);
+          self.interval = setInterval(uptadeTimeInterval, connectTimeInterval);
+        }
+      }
+      self.interval = setInterval(uptadeTimeInterval, connectTimeInterval);
+    });
+
+    this.socket.on('error', (error) => {
+      console.error('[' + (new Date()) + ' Command] Connect error  ');
+      authorize['reconnect'] = true;
+      opts.extraHeaders.authorize = JSON.stringify(authorize);
+      self.isConnected = false;
+      !this.isFirst && (this.interval = setTimeout(() => {
+        console.error('[' + (new Date()) + ' Control] 3212321423567890-986754322  ');
+        clientCommand.connect(cols,rows,pid);
+      },reconnectIntervalCommand.duration()));
+    });
+
+    this.socket.on('connect_error', (data) => {
+      console.error('[' + (new Date()) + ' Command] Connect connect_error  ' + controlRequestUrl + " With " + JSON.stringify(arguments[0]));
+      authorize['reconnect'] = true;
+      opts.extraHeaders.authorize = JSON.stringify(authorize);
+      self.isConnected = false;
+      !this.isFirst && (this.interval = setTimeout(() => {
+        console.error('[' + (new Date()) + ' Control] 3212321423567890-986754322  ');
+        clientCommand.connect(cols,rows,pid);
+      },reconnectIntervalCommand.duration()));
+    });
+
+    this.socket.on('connect_timeout', (data) => {
+      console.error('[' + (new Date()) + ' Command] Connect connect_timeout  ');
+      authorize['reconnect'] = true;
+      opts.extraHeaders.authorize = JSON.stringify(authorize);
+      self.isConnected = false;
+      !this.isFirst && (this.interval = setTimeout(() => {
+        console.error('[' + (new Date()) + ' Control] 3212321423567890-986754322  ');
+        clientCommand.connect(cols,rows,pid);
+      },reconnectIntervalCommand.duration()));
     });
   }
 }
