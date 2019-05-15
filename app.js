@@ -153,6 +153,12 @@ var clientControl = {
       console.log('[' + (new Date()) + ' Control] Client receive message ' + JSON.stringify(MSG));
       try {
         var message = JSON.parse(MSG);
+        console.log("ctx.OPERATION_TYPE.TERMINAL")
+        console.log(ctx.OPERATION_TYPE.TERMINAL)
+        console.log("ctx.MESSAGE_TYPE.COMMON_TYPE")
+        console.log(ctx.MESSAGE_TYPE.COMMON_TYPE)
+
+
       } catch (error) {
         console.error('[' + (new Date()) + ' Control] Client receive message with error: ' + error);
         return;
@@ -174,13 +180,14 @@ var clientControl = {
       }else if (message.Type == ctx.OPERATION_TYPE.TERMINAL) {
         var terminObj = message.data;
         if (message.opType == ctx.MESSAGE_TYPE.COMMON_TYPE) {
-          console.log("---0000---0-0-0-0-0-0-0-0-0-0-0-0-0-0-")
+          console.log("---0000---0-0-0-0-0-0-0-0-0-0-0-0-0-0-");
           var cols = terminObj.cols, rows = terminObj.rows, pid = terminObj.pid;
           self.socket.send(JSON.stringify({type: ctx.OPERATION_TYPE.TERMINAL, opType: ctx.MESSAGE_TYPE.COMMON_TYPE, userId: UserId}));
           if (!Terminal[pid]) {
 
             console.log("9998989898989898989898989898989898989898989898989898989898989898989898989898")
             clientCommand.connect(cols,rows,pid);
+
           }
         }
       }else if (message.Type == ctx.OPERATION_TYPE.TERMINALID) {
