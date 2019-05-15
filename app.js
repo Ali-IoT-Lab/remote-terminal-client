@@ -293,7 +293,7 @@ var clientControl = {
             console.log("rowsrowsrowsrowsrowsrows: " + rows)
             console.log("pidpidpidpidpidpidpidpid: " + pid)
 
-            clientCommand.connect(cols,rows,pid);
+            (new clientCommand()).connect(cols,rows,pid);
 
           }
         }
