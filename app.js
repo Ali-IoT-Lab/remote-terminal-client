@@ -174,9 +174,12 @@ var clientControl = {
       }else if (message.Type == ctx.OPERATION_TYPE.TERMINAL) {
         var terminObj = message.data;
         if (message.opType == ctx.MESSAGE_TYPE.COMMON_TYPE) {
+          console.log("---0000---0-0-0-0-0-0-0-0-0-0-0-0-0-0-")
           var cols = terminObj.cols, rows = terminObj.rows, pid = terminObj.pid;
           self.socket.send(JSON.stringify({type: ctx.OPERATION_TYPE.TERMINAL, opType: ctx.MESSAGE_TYPE.COMMON_TYPE, userId: UserId}));
           if (!Terminal[pid]) {
+
+            console.log("9998989898989898989898989898989898989898989898989898989898989898989898989898")
             clientCommand.connect(cols,rows,pid);
           }
         }
@@ -308,6 +311,8 @@ var clientCommand = {
   socket: null,
   interval: null,
   connect(cols,rows,pid) {
+
+    console.log("-1-1-1--1-1-1-1--1-1--1-1-1-1--1-1-1-1-1--1-1-1-1--1-1--1-1-")
     if (this.socket) {
       this.socket.destroy();
       delete this.socket;
@@ -342,7 +347,6 @@ var clientCommand = {
         }
         console.log('[' + (new Date()) + ' Command] Created terminal with PID: ' + Terminal[pid].pid+", pid from server: " + pid);
       })
-
     });
     this.socket.on('message', (msg) => {
       console.log('[' + (new Date()) + ' Command] Client receive message ' +msg+", pid from server: " + pid);

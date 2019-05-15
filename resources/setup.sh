@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 
 VERSION=v10.14.2
 
