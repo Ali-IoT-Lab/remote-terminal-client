@@ -111,12 +111,6 @@ var reconnectIntervalControl = new Backoff({
   jitter:0.1
 });
 
-var reconnectIntervalCommand = new Backoff({
-  ms: 800,
-  max: 10000,
-  jitter:0.1
-});
-
 var opts = {
   secure:true,
   reconnection:false,
@@ -179,7 +173,76 @@ var clientControl = {
           self.socket.send(JSON.stringify({type: ctx.OPERATION_TYPE.TERMINAL, opType: ctx.MESSAGE_TYPE.COMMON_TYPE, userId: UserId}));
 
           if (!Terminal[pid]) {
-            clientCommand.connect(cols,rows,pid);
+            var socketComm = io(`${commandRequestUrl}&pid=${pid}&version=${version}&terminalId=${TerminalId}`,{
+              secure: true,
+              reconnection:true,
+              rejectUnauthorized: false,
+              reconnectionDelayMax:10000,
+              reconnectionDelay:300,
+              randomizationFactor:0.5,
+              transports:['websocket', 'polling'],
+              extraHeaders: {
+                authorize:JSON.stringify(authorize)
+              }
+            });
+            /*
+            authorize ：
+            * reconnect 是否重连
+            * email 用户邮箱
+            * timestamp 时间戳
+            * terminalId 设备Id
+            * ticket 公钥 邮箱 时间戳加密票据
+            * */
+            socketComm.on('reconnect_attempt',()=> {
+              authorize['reconnect'] = true;
+              socketComm.io.opts.extraHeaders = {
+                authorize:JSON.stringify(authorize),
+              }
+            });
+            socketComm.on('error', (error) => {
+              console.error('[' + (new Date()) + ' Command] Connect error  ' + commandRequestUrl + " With " + JSON.stringify(arguments[0])+", pid from server: " + pid);
+            });
+            socketComm.on('connect_error', (data) => {
+              console.error('[' + (new Date()) + ' Command] Connect connect_error  ' + commandRequestUrl + " With " + JSON.stringify(arguments[0])+", pid from server: " + pid);
+            });
+            socketComm.on('message', (msg) => {
+              console.log('[' + (new Date()) + ' Command] Client receive message ' +msg+", pid from server: " + pid);
+              try {
+                Terminal[pid].write(msg);
+              } catch (error) {
+                console.error('[' + (new Date()) + ' Command] Terminal write msg with error: ' + error+", pid from server: " + pid);
+              }
+            });
+            socketComm.on('connect', () => {
+              authorize['reconnect']=false;
+              console.log('[' + (new Date()) + ' Command] Client Connected With URL ' + commandRequestUrl+", pid from server: " + pid);
+              socketComm.once(`${TerminalId}:${UserId}:${pid}`,function(){
+                if (!Terminal[pid]) {
+                  Terminal[pid] = pty.spawn(process.platform === 'win32' ? 'cmd.exe' : 'bash', [], {
+                    name: 'xterm-color',
+                    cols: cols || 80,
+                    rows: rows || 24,
+                    cwd: os.homedir(),
+                    env: process.env
+                  });
+                  Terminal[pid].on('data', (data) => {
+                    Logs[pid] += data;
+                    socketComm.send(data);
+                  });
+                }
+                console.log('[' + (new Date()) + ' Command] Created terminal with PID: ' + Terminal[pid].pid+", pid from server: " + pid);
+              })
+            });
+            socketComm.on('disconnect', () => {
+              console.log('[' + (new Date()) + ' Command] Connection Closed by server pid: ' + pid+", pid from server: " + pid);
+              if (CloseCommMsg[pid] && CloseCommMsg[pid].Type == ctx.OPERATION_TYPE.CLOSECONNECT){
+                Terminal[pid].kill();
+                delete CloseCommMsg[pid];
+                delete Terminal[pid];
+                delete Logs[pid];
+              }
+            })
+//---------------------------------------------------------------------------------------------
           }
 
         }
@@ -290,110 +353,6 @@ var clientControl = {
     });
 
     return this.socket;
-  }
-}
-
-
-var clientCommand = {
-  isConnected: false,
-  socket: null,
-  interval: null,
-  connect(cols,rows,pid) {
-    if (this.socket) {
-      this.socket.destroy();
-      delete this.socket;
-      this.socket = null;
-    }
-    var self = this;
-    this.socket = io.connect(`${commandRequestUrl}&pid=${pid}&version=${version}&terminalId=${TerminalId}`, {
-      secure:true,
-      reconnection:false,
-      transports:['websocket', 'polling'],
-    });
-
-    this.socket.on('connect', () => {
-      self.isConnected = true;
-      reconnectIntervalCommand = new Backoff({
-        ms: 800,
-        max: 10000,
-        jitter:0.1
-      });
-
-      authorize['reconnect']=false;
-      console.log('[' + (new Date()) + ' Command] Client Connected With URL ' + commandRequestUrl+", pid from server: " + pid);
-      self.socket.once(`${TerminalId}:${UserId}:${pid}`,function(){
-        if (!Terminal[pid]) {
-          Terminal[pid] = pty.spawn(process.platform === 'win32' ? 'cmd.exe' : 'bash', [], {
-            name: 'xterm-color',
-            cols: cols || 80,
-            rows: rows || 24,
-            cwd: os.homedir(),
-            env: process.env
-          });
-          Terminal[pid].on('data', (data) => {
-            Logs[pid] += data;
-            self.socket.send(data);
-          });
-        }
-        console.log('[' + (new Date()) + ' Command] Created terminal with PID: ' + Terminal[pid].pid+", pid from server: " + pid);
-      })
-
-    });
-    this.socket.on('message', (msg) => {
-      console.log('[' + (new Date()) + ' Command] Client receive message ' +msg+", pid from server: " + pid);
-      try {
-        Terminal[pid].write(msg);
-      } catch (error) {
-        console.error('[' + (new Date()) + ' Command] Terminal write msg with error: ' + error+", pid from server: " + pid);
-      }
-    });
-    this.socket.on('disconnect', () => {
-      console.error('[' + (new Date()) + ' Command] Connect connect_error  ' + commandRequestUrl + " With " + JSON.stringify(arguments[0])+", pid from server: " + pid);
-      authorize['reconnect'] = true;
-      opts.extraHeaders.authorize = JSON.stringify(authorize);
-      self.isConnected = false;
-
-      if (CloseCommMsg[pid] && CloseCommMsg[pid].Type == ctx.OPERATION_TYPE.CLOSECONNECT){
-        Terminal[pid].kill();
-        delete CloseCommMsg[pid];
-        delete Terminal[pid];
-        delete Logs[pid];
-      }
-
-      self.interval = setTimeout(() => {
-        clientCommand.connect(cols,rows,pid);
-      },reconnectIntervalCommand.duration());
-    });
-
-    this.socket.on('error', (error) => {
-      console.error('[' + (new Date()) + ' Command] Connect error  ');
-      authorize['reconnect'] = true;
-      opts.extraHeaders.authorize = JSON.stringify(authorize);
-      self.isConnected = false;
-      self.interval = setTimeout(() => {
-        clientCommand.connect(cols,rows,pid);
-      },reconnectIntervalCommand.duration());
-    });
-
-    this.socket.on('connect_error', (data) => {
-      console.error('[' + (new Date()) + ' Command] Connect connect_error  ' + controlRequestUrl + " With " + JSON.stringify(arguments[0]));
-      authorize['reconnect'] = true;
-      opts.extraHeaders.authorize = JSON.stringify(authorize);
-      self.isConnected = false;
-      self.interval = setTimeout(() => {
-        clientCommand.connect(cols,rows,pid);
-      },reconnectIntervalCommand.duration());
-    });
-
-    this.socket.on('connect_timeout', (data) => {
-      console.error('[' + (new Date()) + ' Command] Connect connect_timeout  ');
-      authorize['reconnect'] = true;
-      opts.extraHeaders.authorize = JSON.stringify(authorize);
-      self.isConnected = false;
-      self.interval = setTimeout(() => {
-        clientCommand.connect(cols,rows,pid);
-      },reconnectIntervalCommand.duration());
-    });
   }
 }
 
