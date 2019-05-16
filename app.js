@@ -336,7 +336,6 @@ var clientControl = {
         clientControl.connect()
       },reconnectIntervalControl.duration());
     });
-
     this.socket.on('error', (error) => {
       console.error('[' + (new Date()) + ' Control] Connect error  ' + controlRequestUrl + " With " + JSON.stringify(arguments[0]));
       authorize['terminalId'] = TerminalId;
