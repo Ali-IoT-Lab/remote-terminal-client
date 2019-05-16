@@ -262,7 +262,7 @@ var clientControl = {
         self.socket.send(JSON.stringify({message: {errorCode: 1}, userId: UserId}));
       }
     });
-    this.self.socket.on('connect_error', (error) => {
+    this.socket.on('connect_error', (error) => {
       console.error('[' + (new Date()) + ' Control] Connect connect_error  ');
       authorize['terminalId'] = TerminalId;
       opts.extraHeaders.authorize = JSON.stringify(authorize);
@@ -272,7 +272,7 @@ var clientControl = {
         },reconnectIntervalControl.duration());
       }
     });
-    this.self.socket.on('disconnect', () => {
+    this.socket.on('disconnect', () => {
       console.error('[' + (new Date()) +  ' Control] Connect disconnect  ' + controlRequestUrl + " With " + JSON.stringify(arguments[0]));
       authorize['terminalId'] = TerminalId;
       opts.extraHeaders.authorize = JSON.stringify(authorize);
