@@ -142,6 +142,7 @@ var clientControl = {
 
     this.socket.on('connect', () => {
       self.isConnected = true;
+
       reconnectIntervalControl = new Backoff({
         ms: 800,
         max: 10000,
