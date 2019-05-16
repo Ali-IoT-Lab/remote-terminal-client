@@ -131,7 +131,7 @@ var isFirst = null;
 var clientControl = {
   isConnected: false,
   socket: null,
-  interval: null
+  interval: null,
   connect() {
     if (this.socket) {
       this.socket.destroy();
