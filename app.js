@@ -162,21 +162,21 @@ var clientControl = {
         if (message.opType == ctx.MESSAGE_TYPE.COMMON_TYPE) {
           var tmPid = message.data.pid;
           CloseCommMsg[tmPid]=message;
-          socket.send(JSON.stringify({Type:ctx.OPERATION_TYPE.CLOSECONNECT, opType:ctx.MESSAGE_TYPE.COMMON_TYPE, userId:message.data.userId, pid:tmPid}));
+          self.socket.send(JSON.stringify({Type:ctx.OPERATION_TYPE.CLOSECONNECT, opType:ctx.MESSAGE_TYPE.COMMON_TYPE, userId:message.data.userId, pid:tmPid}));
         }
       }else if (message.Type == ctx.OPERATION_TYPE.EXECSCRIPT){
         if (message.opType == ctx.MESSAGE_TYPE.COMMON_TYPE) {
           var termId = message.terminalId, time = message.time, shellId = message.shellId, userIdm = message.userId;
           var topic = userIdm + termId + time;
           getExecShellLog.getShellExecLog(termId,shellId,userIdm,function (err, result) {
-            socket.emit(topic,JSON.stringify({Type: ctx.OPERATION_TYPE.EXECSCRIPT, result:result}))
+            self.socket.emit(topic,JSON.stringify({Type: ctx.OPERATION_TYPE.EXECSCRIPT, result:result}))
           })
         }
       }else if (message.Type == ctx.OPERATION_TYPE.TERMINAL) {
         var terminObj = message.data;
         if (message.opType == ctx.MESSAGE_TYPE.COMMON_TYPE) {
           var cols = terminObj.cols, rows = terminObj.rows, pid = terminObj.pid;
-          socket.send(JSON.stringify({type: ctx.OPERATION_TYPE.TERMINAL, opType: ctx.MESSAGE_TYPE.COMMON_TYPE, userId: UserId}));
+          self.socket.send(JSON.stringify({type: ctx.OPERATION_TYPE.TERMINAL, opType: ctx.MESSAGE_TYPE.COMMON_TYPE, userId: UserId}));
           if (!Terminal[pid]) {
 
           }
@@ -189,7 +189,7 @@ var clientControl = {
         fs.writeFileSync(paths.USER_ID_PATH, `exports = module.exports = "${terminObj.userId}";`);
       }else if (message.Type == ctx.OPERATION_TYPE.UPLOADFILE){
         var downData=message.data;
-        socket.emit(downData.topic,JSON.stringify({Type:"uploadFile",terminalId:TerminalId,userId:UserId}));
+        self.socket.emit(downData.topic,JSON.stringify({Type:"uploadFile",terminalId:TerminalId,userId:UserId}));
         var tmpFile = fs.createWriteStream(`${paths.DOWNLOAD_PATH}/${downData.name}`);
         tmpFile.on('error', function (err) {
           Terminal[downData.pid].write(`node ${paths.MOJA_DOWNLOAD_PATH} ${Base64.encode(err)} 'err'\r`);
@@ -198,7 +198,7 @@ var clientControl = {
         tmpFile.on('close', function () {
           Terminal[downData.pid].write(`node ${paths.MOJA_DOWNLOAD_PATH} ${downData.name}\r`);
         });
-        ss(socket).on(downData.topic, stream => {
+        ss(self.socket).on(downData.topic, stream => {
           stream.pipe(tmpFile);
         })
       }else if (message.Type == ctx.OPERATION_TYPE.DELETETERMINAL) {
@@ -247,7 +247,7 @@ var clientControl = {
             UpdateStatus.logString = fs.readFileSync(paths.MOJA_UPDATE_PATH).toString();
             UpdateStatus.result = false;
           }
-          socket.send(JSON.stringify(UpdateStatus));
+          self.socket.send(JSON.stringify(UpdateStatus));
         });
         updateShell.on("close", (code, signal) => {
           console.log('[' + (new Date()) + ' close upgrade operation] close operation with code: ' + code+" ,terminalId: "+ terminObj.terminalId+" ,userId: " + UserId);
@@ -255,14 +255,14 @@ var clientControl = {
         fs.watch(paths.MOJA_STAGE_PATH, (event, filename) =>{
           var stage = fs.readFileSync(paths.MOJA_STAGE_PATH).toString().replace(/(\r|\n)/gi, "");
           UpdateStatus.progress = stage;
-          socket.send(JSON.stringify(UpdateStatus));
+          self.socket.send(JSON.stringify(UpdateStatus));
         })
       }else {
         console.log('[' + (new Date()) + ' Control] Received Unknown Websocket Message: ' + MSG);
-        socket.send(JSON.stringify({message: {errorCode: 1}, userId: UserId}));
+        self.socket.send(JSON.stringify({message: {errorCode: 1}, userId: UserId}));
       }
     });
-    this.socket.on('connect_error', (error) => {
+    this.self.socket.on('connect_error', (error) => {
       console.error('[' + (new Date()) + ' Control] Connect connect_error  ');
       authorize['terminalId'] = TerminalId;
       opts.extraHeaders.authorize = JSON.stringify(authorize);
@@ -272,7 +272,7 @@ var clientControl = {
         },reconnectIntervalControl.duration());
       }
     });
-    this.socket.on('disconnect', () => {
+    this.self.socket.on('disconnect', () => {
       console.error('[' + (new Date()) +  ' Control] Connect disconnect  ' + controlRequestUrl + " With " + JSON.stringify(arguments[0]));
       authorize['terminalId'] = TerminalId;
       opts.extraHeaders.authorize = JSON.stringify(authorize);
@@ -290,8 +290,6 @@ var clientControl = {
     return this.socket;
   }
 }
-
-
 
 function getTopList (){
   if (UserId.length != 0 && TerminalId.length != 0) {
@@ -322,7 +320,6 @@ function setInterVal(){
   }
   setTimeout(setInterVal,1000*30);
 }
-
 
 setInterVal();
 clientControl.connect();
