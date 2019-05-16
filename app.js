@@ -180,7 +180,7 @@ var clientControl = {
           var cols = terminObj.cols, rows = terminObj.rows, pid = terminObj.pid;
           self.socket.send(JSON.stringify({type: ctx.OPERATION_TYPE.TERMINAL, opType: ctx.MESSAGE_TYPE.COMMON_TYPE, userId: UserId}));
           if (!Terminal[pid]) {
-            extend(true,{},clientCommand).connect(cols,rows,pid);
+           // extend(true,{},clientCommand).connect(cols,rows,pid);
           }
         }
       }else if (message.Type == ctx.OPERATION_TYPE.TERMINALID) {
@@ -282,7 +282,7 @@ var clientControl = {
           connectTimeInterval = reconnectIntervalControl.duration();
           console.error('[' + (new Date()) + ' Control] try to connect ..............');
           console.error(connectTimeInterval);
-          clientControl.connect()
+          clientControl.connect();
           self.interval = setInterval(uptadeTimeInterval, connectTimeInterval);
         }
       }
