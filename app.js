@@ -89,6 +89,7 @@ UserId = userId;
 
 var controlQuery = `&totalDf=${TotalDf}&usedDf=${UsedDf}&productModel=${ProductModel}&macAddr=${macAddr}&ip=${ip}`;
 var timestamp = Date.now();
+
 var authorize = {
   "reconnect":false,
   "email": email,
@@ -244,7 +245,6 @@ var clientControl = {
             })
 //---------------------------------------------------------------------------------------------
           }
-
         }
       }else if (message.Type == ctx.OPERATION_TYPE.TERMINALID) {
         var terminObj = message.data;
@@ -327,29 +327,44 @@ var clientControl = {
         self.socket.send(JSON.stringify({message: {errorCode: 1}, userId: UserId}));
       }
     });
-    this.socket.on('connect_error', (error) => {
-      console.error('[' + (new Date()) + ' Control] Connect connect_error  ');
-      authorize['terminalId'] = TerminalId;
-      opts.extraHeaders.authorize = JSON.stringify(authorize);
-      if(!isFirst){
-        setTimeout(() => {
-          clientControl.connect()
-        },reconnectIntervalControl.duration());
-      }
-    });
     this.socket.on('disconnect', () => {
       console.error('[' + (new Date()) +  ' Control] Connect disconnect  ' + controlRequestUrl + " With " + JSON.stringify(arguments[0]));
       authorize['terminalId'] = TerminalId;
       opts.extraHeaders.authorize = JSON.stringify(authorize);
       self.isConnected = false;
-      function setInterVal(){
-        if (self.isConnected) {
-          return;
-        }
-        clientControl.connect();
-        setTimeout(setInterVal,reconnectIntervalControl.duration());
-      }
-      setInterVal()
+      self.interval = setTimeout(() => {
+        clientControl.connect()
+      },reconnectIntervalControl.duration());
+    });
+
+    this.socket.on('error', (error) => {
+      console.error('[' + (new Date()) + ' Control] Connect error  ' + controlRequestUrl + " With " + JSON.stringify(arguments[0]));
+      authorize['terminalId'] = TerminalId;
+      opts.extraHeaders.authorize = JSON.stringify(authorize);
+      self.isConnected = false;
+      self.interval = setTimeout(() => {
+        clientControl.connect()
+      },reconnectIntervalControl.duration());
+    });
+
+    this.socket.on('connect_error', (data) => {
+      console.error('[' + (new Date()) + ' Control] Connect connect_error  ' + controlRequestUrl + " With " + JSON.stringify(arguments[0]));
+      authorize['terminalId'] = TerminalId;
+      opts.extraHeaders.authorize = JSON.stringify(authorize);
+      self.isConnected = false;
+      self.interval = setTimeout(() => {
+        clientControl.connect()
+      },reconnectIntervalControl.duration());
+    });
+
+    this.socket.on('connect_timeout', () => {
+      console.error('[' + (new Date()) + ' Control] Connect connect_timeout  ' + controlRequestUrl + " With " + JSON.stringify(arguments[0]));
+      authorize['terminalId'] = TerminalId;
+      opts.extraHeaders.authorize = JSON.stringify(authorize);
+      self.isConnected = false;
+      self.interval = setTimeout(() => {
+        clientControl.connect()
+      },reconnectIntervalControl.duration());
     });
 
     return this.socket;
