@@ -292,6 +292,27 @@ var clientControl = {
 }
 
 
+
+function getTopList (){
+  if (UserId.length != 0 && TerminalId.length != 0) {
+    msmonit.taskList(function (error,topList) {
+      TopListData.push(topList);
+    });
+    msmonit.totalUsage(function(err,usage){
+      TotalUsage.push(usage);
+    })
+  }
+}
+
+function sendMonitorData (){
+  if (UserId.length != 0 && TerminalId.length !=0) {
+    msmonit.sendData(JSON.stringify({userId:UserId, terminalId:TerminalId, topListData:TopListData, totalUsage:TotalUsage, cpuCode:msmonit.cpuCode()}),function(){
+      TopListData.length = 0;
+      TotalUsage.length = 0;
+    });
+  }
+}
+
 function setInterVal(){
   SetInterValCount++;
   getTopList();
