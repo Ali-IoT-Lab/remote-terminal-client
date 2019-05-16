@@ -14,8 +14,8 @@ const io = require('socket.io-client');
 const pty = require('moja-pty').moja_pty;
 const version = require('./version/moja-version.js').version;
 const getExecShellLog = require('./lib/getExecShellLog.js');
-const terminalId = require(paths.TERMINAL_ID_PATH);
-const userId = require(paths.USER_ID_PATH);
+const terminalId = require(paths.TERMINAL_ID_PATH).terminalId;
+const userId = require(paths.USER_ID_PATH).userId;
 const publicKey = require(paths.PUBLIC_KEY_PATH).publicKey;
 const email = require(paths.EMAIL_PATH).email;
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
@@ -250,8 +250,9 @@ var clientControl = {
         var terminObj = message.data;
         TerminalId = terminObj.terminalId;
         UserId =terminObj.userId;
-        fs.writeFileSync(paths.TERMINAL_ID_PATH, `exports = module.exports = "${terminObj.terminalId}";`);
-        fs.writeFileSync(paths.USER_ID_PATH, `exports = module.exports = "${terminObj.userId}";`);
+        updateJson(paths.TERMINAL_ID_PATH,"terminalId",terminObj.terminalId);
+        updateJson(paths.USER_ID_PATH,"userId",terminObj.userId);
+
       }else if (message.Type == ctx.OPERATION_TYPE.UPLOADFILE){
         var downData=message.data;
         self.socket.emit(downData.topic,JSON.stringify({Type:"uploadFile",terminalId:TerminalId,userId:UserId}));
@@ -368,6 +369,24 @@ var clientControl = {
 
     return this.socket;
   }
+}
+
+
+function updateJson(path,key,value){
+  fs.readFile(path,function(err,data){
+    if(err){
+      console.error(err);
+    }
+    var jsonObj = data.toString();
+    jsonObj = JSON.parse(jsonObj);
+    jsonObj[key] = value;
+    var str = JSON.stringify(jsonObj);
+    fs.writeFile(path,str,function(err){
+      if(err){
+        console.error(err);
+      }
+    })
+  })
 }
 
 function getTopList (){
